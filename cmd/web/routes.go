@@ -3,9 +3,10 @@ package main
 import (
 	"github.com/eyko139/go-snippets/config"
 	"net/http"
+	"github.com/justinas/alice"
 )
 
-func Routes(cfg *config.Config) *http.ServeMux {
+func Routes(cfg *config.Config) http.Handler {
 
 	mux := http.NewServeMux()
 
@@ -16,5 +17,7 @@ func Routes(cfg *config.Config) *http.ServeMux {
 	mux.HandleFunc("/", home(cfg))
 	mux.HandleFunc("/snippet/view", snippetView(cfg))
 	mux.HandleFunc("/snippet/create", snippetCreate(cfg))
-	return mux
+
+	standard := alice.New(cfg.PanicRecovery, cfg.LogRequests, secureHeaders)
+	return standard.Then(mux)
 }
