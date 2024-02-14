@@ -5,7 +5,6 @@ import (
 	"flag"
 	"github.com/eyko139/go-snippets/config"
 	_ "github.com/go-sql-driver/mysql" // New import
-	"net/http"
 )
 
 func main() {

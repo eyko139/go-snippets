@@ -22,7 +22,6 @@ func home(cfg *config.Config) http.HandlerFunc {
 			cfg.Hlp.ServerError(w, err)
 			return
 		}
-		//
 		if err != nil {
 			cfg.Hlp.ServerError(w, err)
 			return
