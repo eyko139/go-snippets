@@ -2,22 +2,28 @@ package main
 
 import (
 	"github.com/eyko139/go-snippets/config"
-	"net/http"
+	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
+	"net/http"
 )
 
 func Routes(cfg *config.Config) http.Handler {
 
-	mux := http.NewServeMux()
+	router := httprouter.New()
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.Hlp.NotFound(w)
+	})
 
-	mux.HandleFunc("/", home(cfg))
-	mux.HandleFunc("/snippet/view", snippetView(cfg))
-	mux.HandleFunc("/snippet/create", snippetCreate(cfg))
+	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
+
+	router.HandlerFunc(http.MethodGet, "/", home(cfg))
+	router.HandlerFunc(http.MethodGet, "/snippet/view/:id", snippetView(cfg))
+	router.HandlerFunc(http.MethodGet, "/snippet/create", snippetCreate(cfg))
+	router.HandlerFunc(http.MethodPost, "/snippet/create", snippetCreatePost(cfg))
 
 	standard := alice.New(cfg.PanicRecovery, cfg.LogRequests, secureHeaders)
-	return standard.Then(mux)
+	return standard.Then(router)
 }

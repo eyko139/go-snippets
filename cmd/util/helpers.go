@@ -24,12 +24,11 @@ func NewHelper(templateCache map[string]*template.Template, err *log.Logger, inf
 	}
 }
 
-func (h *Helpers) NewTemplateData() *TemplateData{
+func (h *Helpers) NewTemplateData(r *http.Request) *TemplateData {
 	return &TemplateData{
 		CurrentYear: time.Now().Year(),
 	}
 }
-
 
 func (h *Helpers) ServerError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
