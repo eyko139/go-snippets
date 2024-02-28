@@ -16,6 +16,11 @@ type Helpers struct {
 	TemplateCache map[string]*template.Template
 }
 
+type ErrorData struct {
+	Title   string
+	Message string
+}
+
 func NewHelper(templateCache map[string]*template.Template, err *log.Logger, info *log.Logger) *Helpers {
 	return &Helpers{
 		ErrorLog:      err,
@@ -45,6 +50,17 @@ func (h *Helpers) ClientError(w http.ResponseWriter, status int) {
 
 func (h *Helpers) NotFound(w http.ResponseWriter) {
 	h.ClientError(w, http.StatusNotFound)
+}
+func (h *Helpers) ReturnTemplateError(w http.ResponseWriter, data *TemplateData) error {
+	buf := new(bytes.Buffer)
+	ts := h.TemplateCache["create.html"]
+	err := ts.ExecuteTemplate(buf, "base", data)
+	if err != nil {
+		h.ServerError(w, err)
+	}
+	fmt.Println(buf.String())
+	w.Write([]byte(buf.String()))
+	return nil
 }
 
 func (h *Helpers) Render(w http.ResponseWriter, status int, page string, data *TemplateData) {
