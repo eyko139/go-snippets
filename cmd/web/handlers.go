@@ -4,16 +4,21 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/eyko139/go-snippets/config"
 	"github.com/eyko139/go-snippets/internal/models"
+	"github.com/eyko139/go-snippets/internal/validator"
 )
+
+type snippetCreateForm struct {
+	Title   string
+	Content string
+	Expires int
+	validator.Validator
+}
 
 func home(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -100,27 +105,18 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 			cfg.Hlp.ClientError(w, http.StatusBadRequest)
 			return
 		}
-		//  Validate user input
-		fieldErrors := make(map[string]string)
-		if strings.TrimSpace(title) == "" {
-			fieldErrors["title"] = "This field cannot be blank"
-		} else if utf8.RuneCountInString(title) > 100 {
-			fieldErrors["title"] = "Field cannot be longer than 100 characters"
+		form := snippetCreateForm{
+			Title:   title,
+			Content: content,
+			Expires: expires,
 		}
 
-		if strings.TrimSpace(content) == "" {
-			fieldErrors["content"] = "Content cannot be empty"
-		}
+		form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+		form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+		form.CheckField(validator.PermittedInt(form.Expires, 1, 7, 365), "content", "This field cannot be blank")
 
-		expirationDates := []int{1, 7, 365}
-		if !slices.Contains(expirationDates, expires) {
-			fieldErrors["expires"] = fmt.Sprintf("Expiration date may only contain one of the following values %d", expires)
-		}
-
-		if len(fieldErrors) > 0 {
-			data := cfg.Hlp.NewTemplateData(r)
-			data.FormErrors = fieldErrors
-			err := cfg.Hlp.ReturnTemplateError(w, data)
+		if !form.Valid() {
+			err := cfg.Hlp.ReturnTemplateError(w, form.FieldErrors)
 			if err != nil {
 				cfg.Hlp.ServerError(w, err)
 			}

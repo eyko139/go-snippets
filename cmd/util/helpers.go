@@ -51,14 +51,18 @@ func (h *Helpers) ClientError(w http.ResponseWriter, status int) {
 func (h *Helpers) NotFound(w http.ResponseWriter) {
 	h.ClientError(w, http.StatusNotFound)
 }
-func (h *Helpers) ReturnTemplateError(w http.ResponseWriter, data *TemplateData) error {
+func (h *Helpers) ReturnTemplateError(w http.ResponseWriter, data map[string]string) error {
+	// Create a new TemplateData struct holding the error map
+	templateData := &TemplateData{
+		FormErrors: data,
+	}
+
 	buf := new(bytes.Buffer)
 	ts := h.TemplateCache["create.html"]
-	err := ts.ExecuteTemplate(buf, "base", data)
+	err := ts.ExecuteTemplate(buf, "base", templateData)
 	if err != nil {
 		h.ServerError(w, err)
 	}
-	fmt.Println(buf.String())
 	w.Write([]byte(buf.String()))
 	return nil
 }
