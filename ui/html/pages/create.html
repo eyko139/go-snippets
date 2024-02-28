@@ -1,7 +1,7 @@
 {{define "title"}}Create a new Snippet{{end}}
 
 {{define "main"}}
-<form action='/snippet/create' method='POST'>
+<form hx-post='/snippet/create' hx-swap='innerHTML' method='POST'>
     <div>
         <label>Title:</label>
         <input type="text" name='title'>
@@ -19,5 +19,12 @@
     <div>
         <input type='submit' value='Publish snippet'>
     </div>
+    {{ if .FormErrors }}
+    <div class='error'>
+        {{ range $key, $value := .FormErrors }}
+        <div>{{ $key }} {{$value}}</div>
+        {{ end }}
+    </div>
+    {{ end }}
 </form>
 {{end}}

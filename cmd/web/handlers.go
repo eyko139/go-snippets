@@ -117,6 +117,16 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 			fieldErrors["expires"] = fmt.Sprintf("Expiration date may only contain one of the following values %d", expires)
 		}
 
+		if len(fieldErrors) > 0 {
+			data := cfg.Hlp.NewTemplateData(r)
+			data.FormErrors = fieldErrors
+			err := cfg.Hlp.ReturnTemplateError(w, data)
+			if err != nil {
+				cfg.Hlp.ServerError(w, err)
+			}
+			return
+		}
+
 		id, err := cfg.Snippets.Insert(title, content, expires)
 		if err != nil {
 			cfg.Hlp.ServerError(w, err)

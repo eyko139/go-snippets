@@ -8,4 +8,5 @@ type TemplateData struct {
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
 	CurrentYear int
+	FormErrors  map[string]string
 }
