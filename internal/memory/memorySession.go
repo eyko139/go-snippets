@@ -104,7 +104,7 @@ func (pder *Provider) SessionUpdate(sid string) error {
 }
 
 func init() {
-	pder.sessions = make(map[string]*list.Element, 0)
+	pder.sessions = make(map[string]*list.Element)
 	session.Register("memory", pder)
 
 }

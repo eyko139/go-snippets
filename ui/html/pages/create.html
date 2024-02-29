@@ -2,8 +2,8 @@
         
 
 {{define "main"}}
-<form hx-post='/snippet/create' hx-swap='innerHTML' method='POST'>
-    <div>
+<form hx-post='/snippet/create' hx-target='#body' method='POST'>
+    <div >
         <label>Title:</label>
         {{if index .FormErrors "title" }}
             <label class='error'>{{index .FormErrors "title"}}</label>
@@ -15,7 +15,7 @@
         {{if index .FormErrors "content" }}
             <label class='error'>{{index .FormErrors "content"}}</label>
         {{end}}
-        <textarea name='content'></textarea>
+        <textarea id='content' name='content' type='text' hx-post="/temp" method='POST' hx-trigger="keyup changed delay:500ms" hx-swap='none'>{{ .Content }}</textarea>
     </div>
     <div>
         <label>Delete in:</label>
