@@ -25,6 +25,7 @@ func Routes(cfg *config.Config) http.Handler {
 	router.HandlerFunc(http.MethodGet, "/snippet/view/:id", snippetView(cfg))
 	router.HandlerFunc(http.MethodGet, "/snippet/create", snippetCreate(cfg))
 	router.HandlerFunc(http.MethodPost, "/snippet/create", snippetCreatePost(cfg))
+	router.HandlerFunc(http.MethodPost, "/temp", tempContentPost(cfg))
 
 	standard := alice.New(cfg.PanicRecovery, cfg.LogRequests, secureHeaders)
 	return standard.Then(router)
