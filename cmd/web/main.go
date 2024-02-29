@@ -3,13 +3,21 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"github.com/eyko139/go-snippets/config"
-	_ "github.com/go-sql-driver/mysql" // New import
+	"github.com/eyko139/go-snippets/internal/session"
 	"net/http"
+
+	"github.com/eyko139/go-snippets/config"
+	_ "github.com/eyko139/go-snippets/internal/memory"
+	_ "github.com/go-sql-driver/mysql" // New import
 )
 
 func main() {
 
+	globalSessions, err := session.NewManager("memory", "gosessionid", 3600)
+	if err != nil {
+		panic("Could not initialize session manager")
+	}
+	go globalSessions.GC()
 	addr := flag.String("addr", ":4000", "Http network address")
 	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MYSQL datasource")
 	flag.Parse()
@@ -18,7 +26,7 @@ func main() {
 
 	defer db.Close()
 
-	cfg, err := config.New(db)
+	cfg, err := config.New(db, globalSessions)
 	if err != nil {
 		panic("Error creating config")
 	}

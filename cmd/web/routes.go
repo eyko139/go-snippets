@@ -20,6 +20,8 @@ func Routes(cfg *config.Config) http.Handler {
 	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
 
 	router.HandlerFunc(http.MethodGet, "/", home(cfg))
+    router.HandlerFunc(http.MethodGet, "/login", login(cfg))
+    router.HandlerFunc(http.MethodPost, "/login", loginPost(cfg))
 	router.HandlerFunc(http.MethodGet, "/snippet/view/:id", snippetView(cfg))
 	router.HandlerFunc(http.MethodGet, "/snippet/create", snippetCreate(cfg))
 	router.HandlerFunc(http.MethodPost, "/snippet/create", snippetCreatePost(cfg))

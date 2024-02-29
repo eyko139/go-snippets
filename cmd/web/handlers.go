@@ -54,6 +54,31 @@ func snippetCreate(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
+func login(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data := cfg.Hlp.NewTemplateData(r)
+		cfg.Hlp.Render(w, http.StatusOK, "login.html", data)
+	}
+}
+
+func loginPost(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sess := cfg.GlobalSessions.SessionStart(w, r)
+
+		err := r.ParseForm()
+		if err != nil {
+			cfg.Hlp.ClientError(w, http.StatusBadRequest)
+			return
+		}
+		username := r.PostForm.Get("username")
+		password := r.PostForm.Get("password")
+		sess.Set("username", username)
+		data := cfg.Hlp.NewTemplateData(r)
+		fmt.Println(username, password)
+		cfg.Hlp.Render(w, http.StatusOK, "login.html", data)
+	}
+}
+
 func snippetView(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := httprouter.ParamsFromContext(r.Context())
