@@ -8,6 +8,7 @@ import (
 
 	"github.com/eyko139/go-snippets/internal/session"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,8 +18,9 @@ var pder = &MongoSessionProvider{}
 type MongoSessionStore struct {
 	sid          string                      `bson:"sid"`
 	timeAccessed time.Time                   `bson:"timeAccessed"`
-	value        map[interface{}]interface{} `bson:"value"`
+	value        map[string]interface{} `bson:"value"`
 }
+
 
 type MongoSessionProvider struct {
 	lock       sync.Mutex
@@ -26,18 +28,18 @@ type MongoSessionProvider struct {
 	sessions   map[string]*list.Element
 }
 
-func (mss *MongoSessionStore) Set(key, value interface{}) error {
+func (mss *MongoSessionStore) Set(key string, value interface{}) error {
 	mss.value[key] = value
-	pder.SessionUpdate(mss.sid, mss.value)
+	pder.SessionUpdate(mss.sid, mss)
 	return nil
 }
 
-func (mss *MongoSessionStore) Get(key interface{}) interface{} {
+func (mss *MongoSessionStore) Get(key string) interface{} {
 	result := pder.collection.FindOne(context.TODO(), key)
 	return result
 }
 
-func (mss *MongoSessionStore) Delete(key interface{}) error {
+func (mss *MongoSessionStore) Delete(key string) error {
 	_, err := pder.collection.DeleteOne(context.TODO(), key)
 	return err
 }
@@ -47,7 +49,7 @@ func (mss *MongoSessionStore) SessionID() string {
 }
 
 func (msp *MongoSessionProvider) SessionInit(sid string) (session.Session, error) {
-	v := make(map[interface{}]interface{})
+	v := make(map[string]interface{})
 	newSession := &MongoSessionStore{sid: sid, timeAccessed: time.Now().Local(), value: v}
 	_, err := msp.collection.InsertOne(context.TODO(), bson.D{{"sid", newSession.sid}, {"timeAccessed", newSession.timeAccessed}, {"value", v}})
 	if err != nil {
@@ -56,13 +58,25 @@ func (msp *MongoSessionProvider) SessionInit(sid string) (session.Session, error
 	return newSession, nil
 }
 
+type myTime time.Time
+
 func (msp *MongoSessionProvider) SessionRead(sid string) (session.Session, error) {
-	var result MongoSessionStore
+    var result map[string]interface{}
 	err := msp.collection.FindOne(context.TODO(), bson.D{{"sid", sid}}).Decode(&result)
+    timeAccessed := result["timeAccessed"].(primitive.DateTime).Time()
 	if err != nil {
 		panic(err)
 	}
-	return &result, nil
+    value, ok := result["value"].(map[string]interface{})
+    if !ok {
+        panic("could not cast value")
+    }
+    session := &MongoSessionStore{
+    	sid:          result["sid"].(string),
+    	timeAccessed: timeAccessed,
+    	value: value,
+    }
+	return session, nil
 }
 
 func (msp *MongoSessionProvider) SessionDestroy(sid string) error {
@@ -73,8 +87,8 @@ func (msp *MongoSessionProvider) SessionGC(maxLifeTime int64) {
 	//TODO: implement
 }
 
-func (msp *MongoSessionProvider) SessionUpdate(sid string, update interface{}) error {
-	_, err := msp.collection.UpdateOne(context.TODO(), bson.D{{"sid", sid}}, update)
+func (msp *MongoSessionProvider) SessionUpdate(sid string, update *MongoSessionStore) error {
+    _, err := msp.collection.UpdateOne(context.TODO(), bson.D{{"sid", sid}}, bson.D{{ "$set", bson.D{{"timeAccessed", time.Now()}, {"value", update.value}} }})
 	return err
 }
 
