@@ -3,17 +3,19 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"github.com/eyko139/go-snippets/internal/session"
 	"net/http"
+
+	"github.com/eyko139/go-snippets/internal/session"
 
 	"github.com/eyko139/go-snippets/config"
 	_ "github.com/eyko139/go-snippets/internal/memory"
 	_ "github.com/go-sql-driver/mysql" // New import
+	_ "github.com/eyko139/go-snippets/internal/session/providers"
 )
 
 func main() {
 
-	globalSessions, err := session.NewManager("memory", "gosessionid", 3600)
+	globalSessions, err := session.NewManager("mongo", "gosessionid", 3600)
 	if err != nil {
 		panic("Could not initialize session manager")
 	}

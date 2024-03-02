@@ -50,12 +50,12 @@ func home(cfg *config.Config) http.HandlerFunc {
 func snippetCreate(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := cfg.Hlp.NewTemplateData(r)
-        content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
-        if content != nil {
-            data.Content = content.(string)
-        } else {
-            data.Content = ""
-        }
+		content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
+		if content != nil {
+			//data.Content = content.(string)
+		} else {
+			data.Content = ""
+		}
 		cfg.Hlp.Render(w, http.StatusOK, "create.html", data)
 	}
 }
@@ -117,22 +117,22 @@ func snippetView(cfg *config.Config) http.HandlerFunc {
 }
 
 func tempContentPost(cfg *config.Config) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        err := r.ParseForm()
-        if err != nil {
-            cfg.Hlp.ClientError(w, http.StatusBadRequest)
-            return
-        }
-        content := r.PostForm.Get("content")
-        cfg.GlobalSessions.SessionStart(w, r).Set("content", content)
-    }
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			cfg.Hlp.ClientError(w, http.StatusBadRequest)
+			return
+		}
+		content := r.PostForm.Get("content")
+		cfg.GlobalSessions.SessionStart(w, r).Set("content", content)
+	}
 }
 
 func getTempContent(cfg *config.Config) http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
-        w.Write([]byte(content.(string)))
-    }
+	return func(w http.ResponseWriter, r *http.Request) {
+		content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
+		w.Write([]byte(content.(string)))
+	}
 }
 
 func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
@@ -166,15 +166,15 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 		form.CheckField(validator.PermittedInt(form.Expires, 1, 7, 365), "content", "This field cannot be blank")
 
 		if !form.Valid() {
-            data := cfg.Hlp.NewTemplateData(r)
-            data.FormErrors = form.FieldErrors
-            content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
-            if content != nil {
-                data.Content = content.(string)
-            } else {
-                data.Content = ""
-            }
-			err := cfg.Hlp.ReturnTemplateError(w, data) 
+			data := cfg.Hlp.NewTemplateData(r)
+			data.FormErrors = form.FieldErrors
+			content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
+			if content != nil {
+				data.Content = content.(string)
+			} else {
+				data.Content = ""
+			}
+			err := cfg.Hlp.ReturnTemplateError(w, data)
 			if err != nil {
 				cfg.Hlp.ServerError(w, err)
 			}
