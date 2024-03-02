@@ -26,9 +26,9 @@ type Provider interface {
 }
 
 type Session interface {
-	Set(key, value interface{}) error
-	Get(key interface{}) interface{}
-	Delete(key interface{}) error
+	Set(key string, value interface{}) error
+	Get(key string) interface{}
+	Delete(key string) error
 	SessionID() string
 }
 
