@@ -10,6 +10,7 @@ import (
 
 	"github.com/eyko139/go-snippets/config"
 	"github.com/eyko139/go-snippets/internal/models"
+	"github.com/eyko139/go-snippets/internal/session"
 	"github.com/eyko139/go-snippets/internal/validator"
 )
 
@@ -50,9 +51,10 @@ func home(cfg *config.Config) http.HandlerFunc {
 func snippetCreate(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := cfg.Hlp.NewTemplateData(r)
-		content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
+        ctx := r.Context()
+        content := ctx.Value("session").(session.Session).Get("content")
 		if content != nil {
-			//data.Content = content.(string)
+			data.Content = content.(string)
 		} else {
 			data.Content = ""
 		}
@@ -115,7 +117,9 @@ func snippetView(cfg *config.Config) http.HandlerFunc {
 		}
 	}
 }
-
+// Save the temporay input of the the snippet textarea
+// and store in the session, this tempContent will be retrieved when visiting
+// the createSnippet page
 func tempContentPost(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()

@@ -3,6 +3,8 @@ package providers
 import (
 	"container/list"
 	"context"
+	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -13,19 +15,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var pder = &MongoSessionProvider{}
+var pder = &MongoSessionProvider{sessionLogger: log.New(os.Stdout, "Session\t", log.Ldate|log.Ltime)}
 
 type MongoSessionStore struct {
-	sid          string                      `bson:"sid"`
-	timeAccessed time.Time                   `bson:"timeAccessed"`
+	sid          string                 `bson:"sid"`
+	timeAccessed time.Time              `bson:"timeAccessed"`
 	value        map[string]interface{} `bson:"value"`
 }
 
-
 type MongoSessionProvider struct {
-	lock       sync.Mutex
-	collection *mongo.Collection
-	sessions   map[string]*list.Element
+	lock          sync.Mutex
+	collection    *mongo.Collection
+	sessions      map[string]*list.Element
+	sessionLogger *log.Logger
 }
 
 func (mss *MongoSessionStore) Set(key string, value interface{}) error {
@@ -35,8 +37,7 @@ func (mss *MongoSessionStore) Set(key string, value interface{}) error {
 }
 
 func (mss *MongoSessionStore) Get(key string) interface{} {
-	result := pder.collection.FindOne(context.TODO(), key)
-	return result
+	return mss.value[key]
 }
 
 func (mss *MongoSessionStore) Delete(key string) error {
@@ -51,7 +52,11 @@ func (mss *MongoSessionStore) SessionID() string {
 func (msp *MongoSessionProvider) SessionInit(sid string) (session.Session, error) {
 	v := make(map[string]interface{})
 	newSession := &MongoSessionStore{sid: sid, timeAccessed: time.Now().Local(), value: v}
-	_, err := msp.collection.InsertOne(context.TODO(), bson.D{{"sid", newSession.sid}, {"timeAccessed", newSession.timeAccessed}, {"value", v}})
+	_, err := msp.collection.InsertOne(context.TODO(), bson.D{
+        {Key: "sid", Value: newSession.sid}, 
+        {Key: "timeAccessed", Value: newSession.timeAccessed}, 
+        {Key: "value", Value: v},
+    })
 	if err != nil {
 		panic(err)
 	}
@@ -61,21 +66,21 @@ func (msp *MongoSessionProvider) SessionInit(sid string) (session.Session, error
 type myTime time.Time
 
 func (msp *MongoSessionProvider) SessionRead(sid string) (session.Session, error) {
-    var result map[string]interface{}
-	err := msp.collection.FindOne(context.TODO(), bson.D{{"sid", sid}}).Decode(&result)
-    timeAccessed := result["timeAccessed"].(primitive.DateTime).Time()
+	var result map[string]interface{}
+	err := msp.collection.FindOne(context.TODO(), bson.D{{Key: "sid", Value: sid}}).Decode(&result)
+	timeAccessed := result["timeAccessed"].(primitive.DateTime).Time()
 	if err != nil {
 		panic(err)
 	}
-    value, ok := result["value"].(map[string]interface{})
-    if !ok {
-        panic("could not cast value")
-    }
-    session := &MongoSessionStore{
-    	sid:          result["sid"].(string),
-    	timeAccessed: timeAccessed,
-    	value: value,
-    }
+	value, ok := result["value"].(map[string]interface{})
+	if !ok {
+		panic("could not cast value")
+	}
+	session := &MongoSessionStore{
+		sid:          result["sid"].(string),
+		timeAccessed: timeAccessed,
+		value:        value,
+	}
 	return session, nil
 }
 
@@ -84,11 +89,27 @@ func (msp *MongoSessionProvider) SessionDestroy(sid string) error {
 	return err
 }
 func (msp *MongoSessionProvider) SessionGC(maxLifeTime int64) {
-	//TODO: implement
+	threshold := primitive.NewDateTimeFromTime(time.Now().Add(-time.Second * time.Duration(maxLifeTime)))
+	msp.sessionLogger.Printf("Deleting Sessions older than %s\n", threshold.Time())
+	filter := bson.M{"timeAccessed": bson.M{"$lt": threshold}}
+	deleteResult, err := msp.collection.DeleteMany(context.TODO(), filter)
+	if err != nil {
+		panic(err)
+	}
+	msp.sessionLogger.Printf("Deleted %d documents\n", deleteResult.DeletedCount)
 }
 
 func (msp *MongoSessionProvider) SessionUpdate(sid string, update *MongoSessionStore) error {
-    _, err := msp.collection.UpdateOne(context.TODO(), bson.D{{"sid", sid}}, bson.D{{ "$set", bson.D{{"timeAccessed", time.Now()}, {"value", update.value}} }})
+	_, err := msp.collection.UpdateOne(
+		context.TODO(),
+		bson.D{{Key: "sid", Value: sid}},
+		bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "sid", Value: sid},
+				{Key: "timeAccessed", Value: time.Now()},
+				{Key: "value", Value: update.value},
+			},
+        }})
 	return err
 }
 

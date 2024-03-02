@@ -1,3 +1,4 @@
+//NOTE: this is only to be used if mongo session db is unavailable
 package memory
 
 import (

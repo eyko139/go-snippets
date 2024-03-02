@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -11,6 +12,15 @@ func (cfg *Config) LogRequests(next http.Handler) http.Handler {
 			r.URL.RequestURI())
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (cfg *Config) SessionContext(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        session := cfg.GlobalSessions.SessionStart(w, r) 
+        ctx := r.Context()
+        ctx = context.WithValue(ctx, "session", session)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
 }
 
 func (cfg *Config) PanicRecovery(next http.Handler) http.Handler {
