@@ -2,13 +2,23 @@ package memory
 
 import (
 	"container/list"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/eyko139/go-snippets/internal/session"
 )
 
-var pder = &Provider{list: list.New()}
+// The Provider here is just a list in memory
+// NOTE: Struct properties that are not explicitly initialized are set to their zero value.
+// For mutex, that means an unlocked mutex! 
+var pder = &InMemorySessionProvider{list: list.New()}
+
+type InMemorySessionProvider struct {
+	lock     sync.Mutex
+	sessions map[string]*list.Element
+	list     *list.List
+}
 
 type SessionStore struct {
 	sid          string
@@ -40,13 +50,7 @@ func (st *SessionStore) SessionID() string {
 	return st.sid
 }
 
-type Provider struct {
-	lock     sync.Mutex
-	sessions map[string]*list.Element
-	list     *list.List
-}
-
-func (pder *Provider) SessionInit(sid string) (session.Session, error) {
+func (pder *InMemorySessionProvider) SessionInit(sid string) (session.Session, error) {
 	pder.lock.Lock()
 	defer pder.lock.Unlock()
 	v := make(map[interface{}]interface{}, 0)
@@ -56,7 +60,7 @@ func (pder *Provider) SessionInit(sid string) (session.Session, error) {
 	return newsess, nil
 }
 
-func (pder *Provider) SessionRead(sid string) (session.Session, error) {
+func (pder *InMemorySessionProvider) SessionRead(sid string) (session.Session, error) {
 	if element, ok := pder.sessions[sid]; ok {
 		return element.Value.(*SessionStore), nil
 	}
@@ -64,7 +68,7 @@ func (pder *Provider) SessionRead(sid string) (session.Session, error) {
 	return sess, err
 }
 
-func (pder *Provider) SessionDestroy(sid string) error {
+func (pder *InMemorySessionProvider) SessionDestroy(sid string) error {
 	if element, ok := pder.sessions[sid]; ok {
 		delete(pder.sessions, sid)
 		pder.list.Remove(element)
@@ -73,7 +77,7 @@ func (pder *Provider) SessionDestroy(sid string) error {
 	return nil
 }
 
-func (pder *Provider) SessionGC(maxLifeTime int64) {
+func (pder *InMemorySessionProvider) SessionGC(maxLifeTime int64) {
 	pder.lock.Lock()
 	defer pder.lock.Unlock()
 
@@ -92,7 +96,8 @@ func (pder *Provider) SessionGC(maxLifeTime int64) {
 	}
 }
 
-func (pder *Provider) SessionUpdate(sid string) error {
+func (pder *InMemorySessionProvider) SessionUpdate(sid string) error {
+    fmt.Println(pder)
 	pder.lock.Lock()
 	defer pder.lock.Unlock()
 
