@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/eyko139/go-snippets/internal/session"
 )
 
 type Helpers struct {
@@ -30,8 +32,10 @@ func NewHelper(templateCache map[string]*template.Template, err *log.Logger, inf
 }
 
 func (h *Helpers) NewTemplateData(r *http.Request) *TemplateData {
+    sc := &SessionContext{r: r}
 	return &TemplateData{
 		CurrentYear: time.Now().Year(),
+        FlashMessage: sc.GetString("flash"),
 	}
 }
 
@@ -90,3 +94,28 @@ func (h *Helpers) Render(w http.ResponseWriter, status int, page string, data *T
 		h.ServerError(w, err)
 	}
 }
+
+type SessionValueNotFoundError struct {}
+
+func (se *SessionValueNotFoundError) Error() string {
+    return "Value not found in session"
+}
+
+type SessionContextInt interface {
+    GetString(value string) string
+}
+
+type SessionContext struct {
+    r *http.Request
+}
+
+func (sc *SessionContext) GetString(value string) string {
+    session := sc.r.Context().Value("session").(session.Session)
+    val := session.Get(value)
+    if val != nil {
+        session.Delete("flash")
+        return val.(string)
+    }
+    return ""
+}
+

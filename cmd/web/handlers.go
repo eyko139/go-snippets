@@ -51,8 +51,8 @@ func home(cfg *config.Config) http.HandlerFunc {
 func snippetCreate(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := cfg.Hlp.NewTemplateData(r)
-        ctx := r.Context()
-        content := ctx.Value("session").(session.Session).Get("content")
+		ctx := r.Context()
+		content := ctx.Value("session").(session.Session).Get("content")
 		if content != nil {
 			data.Content = content.(string)
 		} else {
@@ -110,13 +110,17 @@ func snippetView(cfg *config.Config) http.HandlerFunc {
 		data := cfg.Hlp.NewTemplateData(r)
 		data.Snippet = snippet
 
-		cfg.Hlp.Render(w, http.StatusOK, "view.html", data)
+		if err != nil {
+			cfg.InfoLog.Println("No flash value in session")
+		} 		
+        cfg.Hlp.Render(w, http.StatusOK, "view.html", data)
 		if err != nil {
 			cfg.Hlp.ServerError(w, err)
 			return
 		}
 	}
 }
+
 // Save the temporay input of the the snippet textarea
 // and store in the session, this tempContent will be retrieved when visiting
 // the createSnippet page
@@ -189,6 +193,8 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 		if err != nil {
 			cfg.Hlp.ServerError(w, err)
 		}
+		cfg.GlobalSessions.SessionStart(w, r).Set("flash", "snippped successfully created")
+		cfg.GlobalSessions.SessionStart(w, r).Delete("content")
 		http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id),
 			http.StatusSeeOther)
 	}

@@ -8,7 +8,6 @@ import (
 	"github.com/eyko139/go-snippets/internal/session"
 
 	"github.com/eyko139/go-snippets/config"
-	_ "github.com/eyko139/go-snippets/internal/memory"
 	_ "github.com/eyko139/go-snippets/internal/session/providers"
 	_ "github.com/go-sql-driver/mysql" // New import
 )

@@ -10,4 +10,5 @@ type TemplateData struct {
 	CurrentYear int
 	FormErrors  map[string]string
     Content     string
+    FlashMessage string
 }

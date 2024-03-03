@@ -41,12 +41,13 @@ func (mss *MongoSessionStore) Get(key string) interface{} {
 }
 
 func (mss *MongoSessionStore) Delete(key string) error {
-	_, err := pder.collection.DeleteOne(context.TODO(), key)
-	return err
+    delete(mss.value, key)
+    err := pder.SessionUpdate(mss.sid, mss)
+    return err
 }
 
 func (mss *MongoSessionStore) SessionID() string {
-	return ""
+	return mss.sid
 }
 
 func (msp *MongoSessionProvider) SessionInit(sid string) (session.Session, error) {
@@ -81,6 +82,7 @@ func (msp *MongoSessionProvider) SessionRead(sid string) (session.Session, error
 		timeAccessed: timeAccessed,
 		value:        value,
 	}
+    msp.SessionUpdate(sid, session)
 	return session, nil
 }
 
