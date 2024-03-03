@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var pder = &MongoSessionProvider{sessionLogger: log.New(os.Stdout, "Session\t", log.Ldate|log.Ltime)}
@@ -115,11 +114,7 @@ func (msp *MongoSessionProvider) SessionUpdate(sid string, update *MongoSessionS
 	return err
 }
 
-func init() {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://root:password@localhost:27017"))
-	if err != nil {
-		panic(err)
-	}
+func InitSessionProvider(client *mongo.Client) {
 	collection := client.Database("snippets").Collection("sessions")
 	pder.collection = collection
 	session.Register("mongo", pder)

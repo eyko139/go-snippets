@@ -1,24 +1,32 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"net/http"
+	"time"
 
 	"github.com/eyko139/go-snippets/internal/session"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/eyko139/go-snippets/config"
-	_ "github.com/eyko139/go-snippets/internal/session/providers"
+	"github.com/eyko139/go-snippets/internal/session/providers"
 	_ "github.com/go-sql-driver/mysql" // New import
 )
 
 func main() {
+
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://root:password@localhost:27017"))
+    providers.InitSessionProvider(client)
 
 	globalSessions, err := session.NewManager("mongo", "gosessionid", 360)
 	if err != nil {
 		panic("Could not initialize session manager")
 	}
 	go globalSessions.GC()
+
 	addr := flag.String("addr", ":4000", "Http network address")
 	dsn := flag.String("dsn", "web:pass@/snippetbox?parseTime=true", "MYSQL datasource")
 	flag.Parse()
@@ -37,6 +45,11 @@ func main() {
 		Addr:     *addr,
 		ErrorLog: cfg.ErrorLog,
 		Handler:  Routes(cfg),
+        //NOTE: Always set IdleTimeout explicitly, otherwise IdleTimout = ReadTimeout
+        IdleTimeout: time.Minute,
+        ReadTimeout: 5 * time.Second,
+        WriteTimeout: 10 * time.Second,
+
 	}
 	err = srv.ListenAndServe()
 	cfg.ErrorLog.Fatal(err)
