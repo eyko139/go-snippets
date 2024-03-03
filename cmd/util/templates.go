@@ -11,4 +11,5 @@ type TemplateData struct {
 	FormErrors  map[string]string
     Content     string
     FlashMessage string
+    Form interface{}
 }

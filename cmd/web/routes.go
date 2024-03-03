@@ -22,12 +22,17 @@ func Routes(cfg *config.Config) http.Handler {
 	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(home(cfg)))
-    router.Handler(http.MethodGet, "/login", dynamic.ThenFunc(login(cfg)))
-    router.Handler(http.MethodPost, "/login", dynamic.ThenFunc(loginPost(cfg)))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(snippetView(cfg)))
 	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(snippetCreate(cfg)))
 	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(snippetCreatePost(cfg)))
 	router.Handler(http.MethodPost, "/temp", dynamic.ThenFunc(tempContentPost(cfg)))
+
+    // User Management
+    router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(userSignup(cfg)))
+    router.Handler(http.MethodPost, "/user/signup", dynamic.ThenFunc(userSignupPost(cfg)))
+    router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(userLogin(cfg)))
+    router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(userLoginPost(cfg)))
+    router.Handler(http.MethodPost, "/user/logout", dynamic.ThenFunc(userLogoutPost(cfg)))
 
 	standard := alice.New(cfg.PanicRecovery, cfg.LogRequests, secureHeaders)
 	return standard.Then(router)
