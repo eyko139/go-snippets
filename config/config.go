@@ -2,10 +2,12 @@ package config
 
 import (
 	"database/sql"
-	"github.com/eyko139/go-snippets/internal/session"
 	"html/template"
 	"log"
 	"os"
+
+	"github.com/eyko139/go-snippets/internal/session"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/eyko139/go-snippets/cmd/util"
 	"github.com/eyko139/go-snippets/internal/models"
@@ -18,9 +20,10 @@ type Config struct {
 	Snippets       *models.SnippetModel
 	TemplateCache  map[string]*template.Template
 	GlobalSessions *session.Manager
+    UserModel models.UserModelInterface
 }
 
-func New(db *sql.DB, manager *session.Manager) (*Config, error) {
+func New(db *sql.DB, mongoClient *mongo.Client, manager *session.Manager) (*Config, error) {
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	tc, err := models.NewTemplateCache()
@@ -33,5 +36,6 @@ func New(db *sql.DB, manager *session.Manager) (*Config, error) {
 		Hlp:            util.NewHelper(tc, errLog, infoLog),
 		Snippets:       &models.SnippetModel{DB: db},
 		GlobalSessions: manager,
+        UserModel: &models.UserModel{DbClient: mongoClient},
 	}, nil
 }

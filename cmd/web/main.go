@@ -35,7 +35,7 @@ func main() {
 
 	defer db.Close()
 
-	cfg, err := config.New(db, globalSessions)
+	cfg, err := config.New(db, client, globalSessions)
 	if err != nil {
 		panic("Error creating config")
 	}
