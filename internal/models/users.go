@@ -1,8 +1,10 @@
 package models
 
 import (
+	"context"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -25,6 +27,12 @@ type UserModelInterface interface {
 }
 
 func (um *UserModel) Insert(name, email, password string) error {
+
+    um.DbClient.Database("snippetbox").Collection("users").InsertOne(context.TODO(), bson.D{
+        {"name", name},
+        {"email", email},
+
+    })
     return nil
 }
 
