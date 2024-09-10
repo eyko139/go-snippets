@@ -1,7 +1,6 @@
 package config
 
 import (
-	"database/sql"
 	"html/template"
 	"log"
 	"os"
@@ -23,7 +22,7 @@ type Config struct {
     UserModel models.UserModelInterface
 }
 
-func New(db *sql.DB, mongoClient *mongo.Client, manager *session.Manager) (*Config, error) {
+func New(mongoClient *mongo.Client, manager *session.Manager) (*Config, error) {
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	tc, err := models.NewTemplateCache()
@@ -34,7 +33,7 @@ func New(db *sql.DB, mongoClient *mongo.Client, manager *session.Manager) (*Conf
 		ErrorLog:       errLog,
 		InfoLog:        infoLog,
 		Hlp:            util.NewHelper(tc, errLog, infoLog),
-		Snippets:       &models.SnippetModel{DB: db},
+		Snippets:       &models.SnippetModel{DBMongo: mongoClient},
 		GlobalSessions: manager,
         UserModel: &models.UserModel{DbClient: mongoClient},
 	}, nil

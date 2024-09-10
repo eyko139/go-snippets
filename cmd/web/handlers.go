@@ -27,18 +27,10 @@ func home(cfg *config.Config) http.HandlerFunc {
 			cfg.Hlp.ServerError(w, err)
 			return
 		}
-		if err != nil {
-			cfg.Hlp.ServerError(w, err)
-			return
-		}
 		data := cfg.Hlp.NewTemplateData(r)
 		data.Snippets = latest
 
 		cfg.Hlp.Render(w, http.StatusOK, "home.html", data)
-		if err != nil {
-			cfg.Hlp.ServerError(w, err)
-			return
-		}
 	}
 }
 
@@ -84,8 +76,8 @@ func loginPost(cfg *config.Config) http.HandlerFunc {
 func snippetView(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := httprouter.ParamsFromContext(r.Context())
-		id, err := strconv.Atoi(params.ByName("id"))
-		if err != nil || id < 1 {
+		id  := params.ByName("id")
+		if id == "" {
 			cfg.Hlp.NotFound(w)
 		}
 		snippet, err := cfg.Snippets.Get(id)
@@ -189,7 +181,7 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 		}
 		cfg.GlobalSessions.SessionStart(w, r).Set("flash", "snippped successfully created")
 		cfg.GlobalSessions.SessionStart(w, r).Delete("content")
-		http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id),
+		http.Redirect(w, r, fmt.Sprintf("/snippet/view/%s", id),
 			http.StatusSeeOther)
 	}
 }
