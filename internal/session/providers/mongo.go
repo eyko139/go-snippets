@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var pder = &MongoSessionProvider{sessionLogger: log.New(os.Stdout, "Session\t", log.Ldate|log.Ltime)}
+var mongoSessionPder = &MongoSessionProvider{sessionLogger: log.New(os.Stdout, "Session\t", log.Ldate|log.Ltime)}
 
 type MongoSessionStore struct {
 	sid          string                 `bson:"sid"`
@@ -31,7 +31,7 @@ type MongoSessionProvider struct {
 
 func (mss *MongoSessionStore) Set(key string, value interface{}) error {
 	mss.value[key] = value
-	pder.SessionUpdate(mss.sid, mss)
+	mongoSessionPder.SessionUpdate(mss.sid, mss)
 	return nil
 }
 
@@ -41,7 +41,7 @@ func (mss *MongoSessionStore) Get(key string) interface{} {
 
 func (mss *MongoSessionStore) Delete(key string) error {
     delete(mss.value, key)
-    err := pder.SessionUpdate(mss.sid, mss)
+    err := mongoSessionPder.SessionUpdate(mss.sid, mss)
     return err
 }
 
@@ -116,6 +116,6 @@ func (msp *MongoSessionProvider) SessionUpdate(sid string, update *MongoSessionS
 
 func InitSessionProvider(client *mongo.Client) {
 	collection := client.Database("snippets").Collection("sessions")
-	pder.collection = collection
-	session.Register("mongo", pder)
+	mongoSessionPder.collection = collection
+	session.Register("mongo", memSessionPder)
 }

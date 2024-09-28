@@ -1,3 +1,5 @@
 .idea
 /database/database
 /database/workspace
+.envrc
+.tool-versions
