@@ -1,5 +1,5 @@
 //NOTE: this is only to be used if mongo session db is unavailable
-package memory
+package providers
 
 import (
 	"container/list"
@@ -13,7 +13,7 @@ import (
 // The Provider here is just a list in memory
 // NOTE: Struct properties that are not explicitly initialized are set to their zero value.
 // For mutex, that means an unlocked mutex! 
-var pder = &InMemorySessionProvider{list: list.New()}
+var memSessionPder = &InMemorySessionProvider{list: list.New()}
 
 type InMemorySessionProvider struct {
 	lock     sync.Mutex
@@ -29,12 +29,12 @@ type SessionStore struct {
 
 func (st *SessionStore) Set(key string, value interface{}) error {
 	st.value[key] = value
-	pder.SessionUpdate(st.sid)
+	memSessionPder.SessionUpdate(st.sid)
 	return nil
 }
 
 func (st *SessionStore) Get(key string) interface{} {
-	pder.SessionUpdate(st.sid)
+	memSessionPder.SessionUpdate(st.sid)
 	if v, ok := st.value[key]; ok {
 		return v
 	}
@@ -43,7 +43,7 @@ func (st *SessionStore) Get(key string) interface{} {
 
 func (st *SessionStore) Delete(key string) error {
 	delete(st.value, key)
-	pder.SessionUpdate(st.sid)
+	memSessionPder.SessionUpdate(st.sid)
 	return nil
 }
 
@@ -110,7 +110,7 @@ func (pder *InMemorySessionProvider) SessionUpdate(sid string) error {
 }
 
 func init() {
-	pder.sessions = make(map[string]*list.Element)
-	session.Register("memory", pder)
+	memSessionPder.sessions = make(map[string]*list.Element)
+	session.Register("memory", memSessionPder)
 
 }
