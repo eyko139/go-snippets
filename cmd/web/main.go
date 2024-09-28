@@ -14,6 +14,7 @@ import (
 	"github.com/eyko139/go-snippets/internal/session/providers"
 )
 
+
 func main() {
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://root:password@localhost:27017"))
@@ -26,6 +27,8 @@ func main() {
 	}
 
 	go globalSessions.GC()
+
+
 
 	addr := flag.String("addr", ":4000", "Http network address")
 	flag.Parse()

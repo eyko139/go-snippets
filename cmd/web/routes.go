@@ -26,6 +26,7 @@ func Routes(cfg *config.Config) http.Handler {
 	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(snippetCreate(cfg)))
 	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(snippetCreatePost(cfg)))
 	router.Handler(http.MethodPost, "/temp", dynamic.ThenFunc(tempContentPost(cfg)))
+	router.Handler(http.MethodGet, "/snippets", dynamic.ThenFunc(getSnippets(cfg)))
 
     // User Management
     router.Handler(http.MethodGet, "/user/signup", dynamic.ThenFunc(userSignup(cfg)))

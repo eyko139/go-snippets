@@ -22,6 +22,12 @@ type Config struct {
     UserModel models.UserModelInterface
 }
 
+func failOnError(err error, msg string) {
+  if err != nil {
+    log.Panicf("%s: %s", msg, err)
+  }
+}
+
 func New(mongoClient *mongo.Client, manager *session.Manager) (*Config, error) {
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
