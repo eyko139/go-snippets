@@ -9,37 +9,41 @@ import (
 )
 
 type User struct {
-    ID string
-    Name string
-    Email string
-    HashedPassword []byte
-    Create time.Time
+	ID             string
+	Name           string
+	Email          string
+	HashedPassword []byte
+	Create         time.Time
 }
 
 type UserModel struct {
-    DbClient *mongo.Client
+	DbClient *mongo.Client
 }
 
 type UserModelInterface interface {
-    Insert(name, email, password string) error
-    Authenticate(email, password string) (int, error)
-    Exists(id int) (bool, error)
+	Insert(name, email, password string) error
+	Authenticate(email, password string) (int, error)
+	Exists(id int) (bool, error)
 }
 
 func (um *UserModel) Insert(name, email, password string) error {
 
-    um.DbClient.Database("snippetbox").Collection("users").InsertOne(context.TODO(), bson.D{
-        {"name", name},
-        {"email", email},
+    _, err := um.DbClient.Database("snippets").Collection("users").InsertOne(context.TODO(), bson.D{
+		{Key: "name", Value: name},
+		{Key: "email", Value: email},
+		{Key: "password", Value: password},
+	})
+    if err != nil {
+        return  err
+    }
 
-    })
-    return nil
+	return nil
 }
 
 func (um *UserModel) Authenticate(email, password string) (int, error) {
-    return 0, nil
+	return 0, nil
 }
 
 func (um *UserModel) Exists(id int) (bool, error) {
-    return false, nil 
+	return false, nil
 }

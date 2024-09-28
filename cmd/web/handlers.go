@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+    "encoding/json"
 
 	"github.com/julienschmidt/httprouter"
 
@@ -14,6 +16,12 @@ import (
 	"github.com/eyko139/go-snippets/internal/session"
 	"github.com/eyko139/go-snippets/internal/validator"
 )
+
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Panicf("%s: %s", msg, err)
+	}
+}
 
 func home(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +84,7 @@ func loginPost(cfg *config.Config) http.HandlerFunc {
 func snippetView(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := httprouter.ParamsFromContext(r.Context())
-		id  := params.ByName("id")
+		id := params.ByName("id")
 		if id == "" {
 			cfg.Hlp.NotFound(w)
 		}
@@ -89,21 +97,10 @@ func snippetView(cfg *config.Config) http.HandlerFunc {
 			}
 			return
 		}
-		if err != nil {
-			cfg.Hlp.ServerError(w, err)
-			return
-		}
 		data := cfg.Hlp.NewTemplateData(r)
 		data.Snippet = snippet
 
-		if err != nil {
-			cfg.InfoLog.Println("No flash value in session")
-		}
 		cfg.Hlp.Render(w, http.StatusOK, "view.html", data)
-		if err != nil {
-			cfg.Hlp.ServerError(w, err)
-			return
-		}
 	}
 }
 
@@ -180,6 +177,10 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 			cfg.Hlp.ServerError(w, err)
 		}
 		cfg.GlobalSessions.SessionStart(w, r).Set("flash", "snippped successfully created")
+        // pe := util.Publish(content)
+        // if pe != nil {
+        //     cfg.ErrorLog.Printf("Could not publish message")
+        // }
 		cfg.GlobalSessions.SessionStart(w, r).Delete("content")
 		http.Redirect(w, r, fmt.Sprintf("/snippet/view/%s", id),
 			http.StatusSeeOther)
@@ -207,18 +208,24 @@ func userSignupPost(cfg *config.Config) http.HandlerFunc {
 			Name:     r.PostForm.Get("name"),
 			Password: r.PostForm.Get("password"),
 		}
-       formData.CheckField(validator.NotBlank(formData.Name), "name", "This field cannot be blank")
-       formData.CheckField(validator.NotBlank(formData.Email), "email", "This field cannot be blank")
-       formData.CheckField(validator.Matches(formData.Email, validator.EmailRX), "email", "Please provide a valid email address")
-       formData.CheckField(validator.NotBlank(formData.Password), "password", "Cannot be Blank")
-       if !formData.Valid() {
-            td := cfg.Hlp.NewTemplateData(r)
-            td.FormErrors = formData.FieldErrors
-            td.Form = formData
-            cfg.Hlp.Render(w, http.StatusUnprocessableEntity, "signup.html", td)
-            return
-       }
-       fmt.Printf("Creating new user with %+v", formData)
+		formData.CheckField(validator.NotBlank(formData.Name), "name", "This field cannot be blank")
+		formData.CheckField(validator.NotBlank(formData.Email), "email", "This field cannot be blank")
+		formData.CheckField(validator.Matches(formData.Email, validator.EmailRX), "email", "Please provide a valid email address")
+		formData.CheckField(validator.NotBlank(formData.Password), "password", "Cannot be Blank")
+		if !formData.Valid() {
+			td := cfg.Hlp.NewTemplateData(r)
+			td.FormErrors = formData.FieldErrors
+			td.Form = formData
+			cfg.Hlp.Render(w, http.StatusUnprocessableEntity, "signup.html", td)
+			return
+		}
+		err = cfg.UserModel.Insert(formData.Name, formData.Email, formData.Password)
+
+		if err != nil {
+			cfg.Hlp.ServerError(w, err)
+		}
+
+		return
 	}
 }
 
@@ -236,5 +243,17 @@ func userLoginPost(cfg *config.Config) http.HandlerFunc {
 func userLogoutPost(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//TODO: implement
+	}
+}
+
+func getSnippets(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		latest, err := cfg.Snippets.Latest()
+		if err != nil {
+			http.Error(w, "error", 304)
+		}
+        w.Header().Set("Access-Control-Allow-Origin", "*")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(latest)
 	}
 }
