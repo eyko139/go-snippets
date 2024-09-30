@@ -20,6 +20,7 @@ func Routes(cfg *config.Config) http.Handler {
     dynamic := alice.New(cfg.SessionContext)
 
 	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
+	router.Handler(http.MethodGet, "/health", dynamic.ThenFunc(health()))
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(home(cfg)))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(snippetView(cfg)))

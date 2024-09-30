@@ -6,12 +6,12 @@ import (
 	"log"
 	"os"
 
+	"github.com/eyko139/go-snippets/cmd/util"
+	"github.com/eyko139/go-snippets/internal/models"
 	"github.com/eyko139/go-snippets/internal/session"
 	"github.com/eyko139/go-snippets/internal/session/providers"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"github.com/eyko139/go-snippets/cmd/util"
-	"github.com/eyko139/go-snippets/internal/models"
 )
 
 type Config struct {
@@ -22,6 +22,7 @@ type Config struct {
 	TemplateCache  map[string]*template.Template
 	GlobalSessions *session.Manager
 	UserModel      models.UserModelInterface
+	Broker         models.Broker
 }
 
 func failOnError(err error, msg string) {
@@ -37,14 +38,14 @@ func NewApp(appConfig *Env) (*Config, error) {
 
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(appConfig.DBConnectionString))
 
-    if err != nil {
-        errLog.Printf("Failed to connect to DB %s", err)
-    }
-    pingErr := client.Ping(context.Background(), nil)
+	if err != nil {
+		errLog.Printf("Failed to connect to DB %s", err)
+	}
+	pingErr := client.Ping(context.Background(), nil)
 
-    if pingErr != nil {
-        errLog.Printf("Database Ping failed", pingErr)
-    }
+	if pingErr != nil {
+		errLog.Printf("Database Ping failed", pingErr)
+	}
 
 	providers.InitSessionProvider(client)
 	globalSessions, err := session.NewManager(appConfig.SessionProvider, "gosessionid", 360)
@@ -57,6 +58,8 @@ func NewApp(appConfig *Env) (*Config, error) {
 
 	tc, err := models.NewTemplateCache()
 
+	broker := models.NewBroker(appConfig.BrokerConnection, infoLog, errLog)
+
 	if err != nil {
 		return nil, err
 	}
@@ -68,5 +71,6 @@ func NewApp(appConfig *Env) (*Config, error) {
 		Snippets:       &models.SnippetModel{DBMongo: client},
 		GlobalSessions: globalSessions,
 		UserModel:      &models.UserModel{DbClient: client},
+		Broker:         broker,
 	}, nil
 }

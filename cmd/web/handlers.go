@@ -177,10 +177,7 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 			cfg.Hlp.ServerError(w, err)
 		}
 		cfg.GlobalSessions.SessionStart(w, r).Set("flash", "snippped successfully created")
-        // pe := util.Publish(content)
-        // if pe != nil {
-        //     cfg.ErrorLog.Printf("Could not publish message")
-        // }
+        cfg.Broker.Publish(content)
 		cfg.GlobalSessions.SessionStart(w, r).Delete("content")
 		http.Redirect(w, r, fmt.Sprintf("/snippet/view/%s", id),
 			http.StatusSeeOther)
@@ -256,4 +253,11 @@ func getSnippets(cfg *config.Config) http.HandlerFunc {
         w.WriteHeader(http.StatusOK)
         json.NewEncoder(w).Encode(latest)
 	}
+}
+
+func health() http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte("OK"))
+    }
 }

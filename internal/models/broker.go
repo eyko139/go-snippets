@@ -1,31 +1,37 @@
-package util
+package models
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		fmt.Printf("failed to publish %s; %s", err, msg)
+type Broker interface {
+	Publish(string) 
+}
+
+type BrokerStruct struct {
+    ConnectionString string
+    errLog *log.Logger
+}
+
+func NewBroker(connectionString string, infoLog *log.Logger, errLog *log.Logger) *BrokerStruct {
+	return &BrokerStruct{
+        ConnectionString: connectionString,
+		errLog:  errLog,
 	}
 }
 
-func Publish(message string) error {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
+func (b BrokerStruct) Publish(message string) {
+	conn, err := amqp.Dial(b.ConnectionString)
 	if err != nil {
-		return err
+		b.errLog.Printf("Could not establish connection to rabbitmq")
 	}
+	defer conn.Close()
 	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
 	defer ch.Close()
-
 	q, err := ch.QueueDeclare(
 		"hello", // name
 		false,   // durable
@@ -34,7 +40,9 @@ func Publish(message string) error {
 		false,   // no-wait
 		nil,     // arguments
 	)
-	failOnError(err, "Failed to declare a queue")
+	if err != nil {
+		b.errLog.Printf("Failed to declare q")
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -48,7 +56,8 @@ func Publish(message string) error {
 			ContentType: "text/plain",
 			Body:        []byte(message),
 		})
-	failOnError(err, "Failed to publish a message")
+	if err != nil {
+		b.errLog.Printf("Failed to publish")
+	}
 	log.Printf(" [x] Sent %s\n", message)
-    return err
 }
