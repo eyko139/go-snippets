@@ -24,6 +24,12 @@ type SnippetModel struct {
 	DBMongo *mongo.Client
 }
 
+type SnippetModelInterface interface {
+	Insert(title string, content string, expires int) (string, error)
+	Get(id string) (*Snippet, error)
+	Latest() ([]*Snippet, error)
+}
+
 func (m *SnippetModel) Insert(title string, content string, expires int) (string, error) {
 
 	res, err := m.DBMongo.Database("snippets").Collection("snippets").InsertOne(context.TODO(), bson.D{
