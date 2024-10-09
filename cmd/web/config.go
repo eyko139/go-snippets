@@ -18,7 +18,7 @@ type Config struct {
 	ErrorLog       *log.Logger
 	InfoLog        *log.Logger
 	Hlp            *util.Helpers
-	Snippets       *models.SnippetModel
+	Snippets       models.SnippetModelInterface
 	TemplateCache  map[string]*template.Template
 	GlobalSessions *session.Manager
 	UserModel      models.UserModelInterface
