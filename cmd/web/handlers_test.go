@@ -1,36 +1,28 @@
 package main
 
 import (
-    "testing"
-    "net/http/httptest"
-    "net/http"
-    "github.com/eyko139/go-snippets/internal/assert"
-    "io"
+	"github.com/eyko139/go-snippets/internal/assert"
+	"net/http"
+	"testing"
 )
 
 func TestHealth(t *testing.T) {
-    rr := httptest.NewRecorder()
 
-    r, err := http.NewRequest(http.MethodGet, "/health", nil)
+	env := NewEnv()
 
-    if err != nil {
-        t.Fatalf("Failed to execute request %s", err)
-    }
+	app, err := newTestApplication(env)
 
-    healthHandler := health()
-    healthHandler(rr, r)
-    
-    rs := rr.Result()
+	ts := newTestServer(app.Routes())
+	defer ts.Close()
 
-    assert.AssertEqual(t, rs.StatusCode, http.StatusOK)
+	code, _, body := ts.get(t, "/health")
 
-    defer rs.Body.Close()
-    body, err := io.ReadAll(rs.Body)
+	assert.AssertEqual(t, code, http.StatusOK)
 
-    if err != nil {
-        t.Fatalf("failed to parse body, err: %s", err)
-    }
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    assert.AssertEqual(t, string(body),"OK")
+	assert.AssertEqual(t, body, "OK")
 
 }

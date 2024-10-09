@@ -1,27 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/eyko139/go-snippets/config"
-    "fmt"
 )
-
 
 func main() {
 
-    env := config.NewEnv()
+	env := NewEnv()
 
-	cfg, err := config.NewApp(env)
-
+	cfg, err := NewApp(env)
 
 	// Initialize a new http.Server struct. We set the Addr and Handler fields so
-	cfg.InfoLog.Printf("Starting server on %s", env.ServerPort) 
+	cfg.InfoLog.Printf("Starting server on %s", env.ServerPort)
 	srv := &http.Server{
-        Addr:     fmt.Sprintf(":%s", env.ServerPort),
+		Addr:     fmt.Sprintf(":%s", env.ServerPort),
 		ErrorLog: cfg.ErrorLog,
-		Handler:  Routes(cfg),
+		Handler:  cfg.Routes(),
 		//NOTE: Always set IdleTimeout explicitly, otherwise IdleTimout = ReadTimeout
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
