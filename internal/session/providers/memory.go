@@ -1,4 +1,4 @@
-//NOTE: this is only to be used if mongo session db is unavailable
+// NOTE: this is only to be used if mongo session db is unavailable
 package providers
 
 import (
@@ -12,7 +12,7 @@ import (
 
 // The Provider here is just a list in memory
 // NOTE: Struct properties that are not explicitly initialized are set to their zero value.
-// For mutex, that means an unlocked mutex! 
+// For mutex, that means an unlocked mutex!
 var memSessionPder = &InMemorySessionProvider{list: list.New()}
 
 type InMemorySessionProvider struct {
@@ -98,7 +98,7 @@ func (pder *InMemorySessionProvider) SessionGC(maxLifeTime int64) {
 }
 
 func (pder *InMemorySessionProvider) SessionUpdate(sid string) error {
-    fmt.Println(pder)
+	fmt.Println(pder)
 	pder.lock.Lock()
 	defer pder.lock.Unlock()
 
@@ -109,8 +109,7 @@ func (pder *InMemorySessionProvider) SessionUpdate(sid string) error {
 	return nil
 }
 
-func init() {
+func InitMemorySession() {
 	memSessionPder.sessions = make(map[string]*list.Element)
 	session.Register("memory", memSessionPder)
-
 }

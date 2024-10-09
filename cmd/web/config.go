@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"context"
@@ -25,12 +25,6 @@ type Config struct {
 	Broker         models.Broker
 }
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Panicf("%s: %s", msg, err)
-	}
-}
-
 func NewApp(appConfig *Env) (*Config, error) {
 
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
@@ -44,14 +38,14 @@ func NewApp(appConfig *Env) (*Config, error) {
 	pingErr := client.Ping(context.Background(), nil)
 
 	if pingErr != nil {
-		errLog.Printf("Database Ping failed", pingErr)
+		errLog.Printf("Database Ping failed, err: %s", pingErr)
 	}
 
 	providers.InitSessionProvider(client)
 	globalSessions, err := session.NewManager(appConfig.SessionProvider, "gosessionid", 360)
 
 	if err != nil {
-		panic("Could not initialize session manager")
+		errLog.Printf("Could not initialize session manager")
 	}
 
 	go globalSessions.GC()

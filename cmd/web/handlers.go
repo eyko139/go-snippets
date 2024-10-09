@@ -1,17 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-    "encoding/json"
 
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/eyko139/go-snippets/cmd/util"
-	"github.com/eyko139/go-snippets/config"
 	"github.com/eyko139/go-snippets/internal/models"
 	"github.com/eyko139/go-snippets/internal/session"
 	"github.com/eyko139/go-snippets/internal/validator"
@@ -23,7 +22,7 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func home(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) home() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			// http.NotFound helper for writing 404 and message
@@ -42,7 +41,7 @@ func home(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func snippetCreate(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) snippetCreate() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := cfg.Hlp.NewTemplateData(r)
 		ctx := r.Context()
@@ -56,14 +55,14 @@ func snippetCreate(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func login(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := cfg.Hlp.NewTemplateData(r)
 		cfg.Hlp.Render(w, http.StatusOK, "login.html", data)
 	}
 }
 
-func loginPost(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) loginPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess := cfg.GlobalSessions.SessionStart(w, r)
 
@@ -81,7 +80,7 @@ func loginPost(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func snippetView(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) snippetView() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := httprouter.ParamsFromContext(r.Context())
 		id := params.ByName("id")
@@ -107,7 +106,7 @@ func snippetView(cfg *config.Config) http.HandlerFunc {
 // Save the temporay input of the the snippet textarea
 // and store in the session, this tempContent will be retrieved when visiting
 // the createSnippet page
-func tempContentPost(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) tempContentPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -119,14 +118,14 @@ func tempContentPost(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func getTempContent(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) getTempContent() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		content := cfg.GlobalSessions.SessionStart(w, r).Get("content")
 		w.Write([]byte(content.(string)))
 	}
 }
 
-func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) snippetCreatePost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			// headers are automatically converted into correct case according to http standard
@@ -177,7 +176,7 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 			cfg.Hlp.ServerError(w, err)
 		}
 		cfg.GlobalSessions.SessionStart(w, r).Set("flash", "snippped successfully created")
-        cfg.Broker.Publish(content)
+		cfg.Broker.Publish(content)
 		cfg.GlobalSessions.SessionStart(w, r).Delete("content")
 		http.Redirect(w, r, fmt.Sprintf("/snippet/view/%s", id),
 			http.StatusSeeOther)
@@ -186,7 +185,7 @@ func snippetCreatePost(cfg *config.Config) http.HandlerFunc {
 
 // User Management
 
-func userSignup(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) userSignup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := cfg.Hlp.NewTemplateData(r)
 		data.Form = &util.UserSignupForm{}
@@ -194,7 +193,7 @@ func userSignup(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func userSignupPost(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) userSignupPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -226,38 +225,38 @@ func userSignupPost(cfg *config.Config) http.HandlerFunc {
 	}
 }
 
-func userLogin(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) userLogin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//TODO: implement
 	}
 }
-func userLoginPost(cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		//TODO: implement
-	}
-}
-
-func userLogoutPost(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) userLoginPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		//TODO: implement
 	}
 }
 
-func getSnippets(cfg *config.Config) http.HandlerFunc {
+func (cfg *Config) userLogoutPost() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//TODO: implement
+	}
+}
+
+func (cfg *Config) getSnippets() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		latest, err := cfg.Snippets.Latest()
 		if err != nil {
 			http.Error(w, "error", 304)
 		}
-        w.Header().Set("Access-Control-Allow-Origin", "*")
-        w.WriteHeader(http.StatusOK)
-        json.NewEncoder(w).Encode(latest)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(latest)
 	}
 }
 
 func health() http.HandlerFunc {
-    return func(w http.ResponseWriter, r *http.Request) {
-        w.WriteHeader(http.StatusOK)
-        w.Write([]byte("OK"))
-    }
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}
 }
