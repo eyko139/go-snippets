@@ -24,7 +24,7 @@ func TestHealth(t *testing.T) {
 
 	assert.AssertEqual(t, code, http.StatusOK)
 	assert.AssertEqual(t, body, "OK")
-    session.DestroyProvider("memory")
+	session.DestroyProvider("memory")
 }
 
 func TestSnippetView(t *testing.T) {
@@ -38,6 +38,7 @@ func TestSnippetView(t *testing.T) {
 	}
 
 	ts := newTestServer(t, app.Routes())
+
 	defer ts.Close()
 
 	tests := []struct {
@@ -52,17 +53,23 @@ func TestSnippetView(t *testing.T) {
 			wantCode: http.StatusOK,
 			wantBody: "mockContent",
 		},
+		{
+			name:     "GetNonExistiant",
+			urlPath:  "/snippet/view/2",
+			wantCode: http.StatusNotFound,
+			wantBody: "",
+		},
 	}
 
-    for _, test := range(tests) {
-        t.Run(test.name, func(t *testing.T) {
-            code, _, body := ts.get(t, test.urlPath)
-            assert.AssertEqual(t, code, http.StatusOK)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			code, _, body := ts.get(t, test.urlPath)
+			assert.AssertEqual(t, code, test.wantCode)
 
-            if test.wantBody != "" {
-                assert.StringContains(t, body, test.wantBody)
-            }
-        })
-    }
-    session.DestroyProvider("memory")
+			if test.wantBody != "" {
+				assert.StringContains(t, body, test.wantBody)
+			}
+		})
+	}
+	session.DestroyProvider("memory")
 }

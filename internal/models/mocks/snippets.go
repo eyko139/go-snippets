@@ -1,7 +1,6 @@
 package mocks
 
 import (
-	"errors"
 	"github.com/eyko139/go-snippets/internal/models"
 	"time"
 )
@@ -24,7 +23,7 @@ func (m *SnippetModel) Get(id string) (*models.Snippet, error) {
 	if id == "1" {
 		return mockSnippet, nil
 	}
-	return nil, errors.New("snippet not found")
+	return nil, models.ErrNoRecord
 }
 
 func (m *SnippetModel) Latest() ([]*models.Snippet, error) {

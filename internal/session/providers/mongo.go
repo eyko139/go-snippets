@@ -117,5 +117,5 @@ func (msp *MongoSessionProvider) SessionUpdate(sid string, update *MongoSessionS
 func InitSessionProvider(client *mongo.Client) {
 	collection := client.Database("snippets").Collection("sessions")
 	mongoSessionPder.collection = collection
-	session.Register("mongo", memSessionPder)
+	session.Register("mongo", mongoSessionPder)
 }

@@ -50,7 +50,7 @@ func (m *SnippetModel) Get(id string) (*Snippet, error) {
 	var snippet Snippet
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, err
+		return nil, ErrNoRecord
 	}
 
 	res := m.DBMongo.Database("snippets").Collection("snippets").FindOne(context.TODO(), bson.M{"_id": objectId})

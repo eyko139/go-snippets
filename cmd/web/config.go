@@ -43,7 +43,7 @@ func NewApp(appConfig *Env) (*Config, error) {
 
 	providers.InitSessionProvider(client)
 	globalSessions, err := session.NewManager(appConfig.SessionProvider, "gosessionid", 360)
-
+    
 	if err != nil {
 		errLog.Printf("Could not initialize session manager")
 	}
