@@ -11,6 +11,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"github.com/eyko139/go-snippets/cmd/util"
+	"github.com/eyko139/go-snippets/cmd/web/websocket"
 	"github.com/eyko139/go-snippets/internal/models"
 	"github.com/eyko139/go-snippets/internal/session"
 	"github.com/eyko139/go-snippets/internal/validator"
@@ -258,5 +259,11 @@ func health() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
+	}
+}
+
+func (cfg *Config) ws() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		websocket.ServeWs(cfg.Hub, w, r)
 	}
 }

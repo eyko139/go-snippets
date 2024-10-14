@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/eyko139/go-snippets/cmd/util"
+	"github.com/eyko139/go-snippets/cmd/web/websocket"
 	"github.com/eyko139/go-snippets/internal/models"
 	"github.com/eyko139/go-snippets/internal/session"
 	"github.com/eyko139/go-snippets/internal/session/providers"
@@ -23,9 +24,10 @@ type Config struct {
 	GlobalSessions *session.Manager
 	UserModel      models.UserModelInterface
 	Broker         models.Broker
+	Hub            *websocket.Hub
 }
 
-func NewApp(appConfig *Env) (*Config, error) {
+func NewApp(appConfig *Env, hub *websocket.Hub) (*Config, error) {
 
 	errLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -43,7 +45,7 @@ func NewApp(appConfig *Env) (*Config, error) {
 
 	providers.InitSessionProvider(client)
 	globalSessions, err := session.NewManager(appConfig.SessionProvider, "gosessionid", 360)
-    
+
 	if err != nil {
 		errLog.Printf("Could not initialize session manager")
 	}
@@ -66,5 +68,6 @@ func NewApp(appConfig *Env) (*Config, error) {
 		GlobalSessions: globalSessions,
 		UserModel:      &models.UserModel{DbClient: client},
 		Broker:         broker,
+		Hub:            hub,
 	}, nil
 }

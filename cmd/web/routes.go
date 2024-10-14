@@ -22,6 +22,7 @@ func (cfg *Config) Routes() http.Handler {
 	router.Handler(http.MethodGet, "/health", dynamic.ThenFunc(health()))
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(cfg.home()))
+	router.Handler(http.MethodGet, "/ws", cfg.ws())
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(cfg.snippetView()))
 	router.Handler(http.MethodGet, "/snippet/create", dynamic.ThenFunc(cfg.snippetCreate()))
 	router.Handler(http.MethodPost, "/snippet/create", dynamic.ThenFunc(cfg.snippetCreatePost()))

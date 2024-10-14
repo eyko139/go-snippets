@@ -6,3 +6,10 @@ for (var i = 0; i < navLinks.length; i++) {
 		break;
 	}
 }
+
+var messageHeader = document.getElementById("messages")
+
+const socket = new WebSocket('ws://localhost:4000/ws')
+socket.onmessage = (event) => {
+    messageHeader.innerHTML = event.data;
+}

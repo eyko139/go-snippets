@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/eyko139/go-snippets/cmd/web/websocket"
 	"net/http"
 	"time"
 )
@@ -10,7 +11,10 @@ func main() {
 
 	env := NewEnv()
 
-	cfg, err := NewApp(env)
+	hub := websocket.NewHub()
+	go hub.Run()
+
+	cfg, err := NewApp(env, hub)
 
 	// Initialize a new http.Server struct. We set the Addr and Handler fields so
 	cfg.InfoLog.Printf("Starting server on %s", env.ServerPort)
